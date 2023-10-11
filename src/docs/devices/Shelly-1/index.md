@@ -252,6 +252,9 @@ text_sensor:
   - platform: wifi_info
     ip_address:
       name: ${device_name} IP
+  - platform: homeassistant
+    id: ikea806
+    entity_id: light.ikea_806
 
 # Sensors with general information.
 sensor:
@@ -293,10 +296,19 @@ binary_sensor:
                   - switch.is_on: shelly_relay
               # toggle smart light if wifi and api are connected and relay is on
               then:
-                - homeassistant.service:
-                    service: light.toggle
-                    data:
-                      entity_id: light.kitchen
+              # allow toggle light if Zigbee be down                
+                - if: 
+                    condition:
+                      text_sensor.state: 
+                        id: ikea806
+                        state: 'unavailable' 
+                    then:
+                      - switch.toggle: shelly_relay
+                    else:
+                      - homeassistant.service:
+                          service: light.toggle
+                          data:
+                            entity_id: light.kitchen
               # else, toggle relay
               else:
                 - switch.toggle: shelly_relay
